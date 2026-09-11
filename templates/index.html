@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MakeupMate AI - Beauty Tips Chatbot</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #ffe4ec, #ffd1dc);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .chat-container {
+        width: 100%;
+        max-width: 480px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 640px;
+    }
+
+    .chat-header {
+        background: linear-gradient(135deg, #ff6f91, #ff9a8b);
+        color: #fff;
+        padding: 18px 20px;
+        text-align: center;
+    }
+
+    .chat-header h1 {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .chat-header p {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #fff8f9;
+    }
+
+    .message {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .message.bot {
+        background: #ffe0e9;
+        color: #333;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+    }
+
+    .message.user {
+        background: #ff6f91;
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.typing {
+        font-style: italic;
+        opacity: 0.7;
+    }
+
+    .chat-input {
+        display: flex;
+        border-top: 1px solid #eee;
+        padding: 12px;
+        gap: 8px;
+        background: #fff;
+    }
+
+    .chat-input input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+        font-size: 14px;
+    }
+
+    .chat-input input:focus {
+        border-color: #ff6f91;
+    }
+
+    .chat-input button {
+        background: #ff6f91;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .chat-input button:hover {
+        background: #ff4f75;
+    }
+
+    .chat-input button:disabled {
+        background: #f5b7c6;
+        cursor: not-allowed;
+    }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>💄 MakeupMate AI</h1>
+        <p>Your personal beauty & makeup tips assistant</p>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">
+            Hi! I'm MakeupMate AI 💕 Ask me anything about makeup application,
+            beauty looks, or skincare tips for makeup!
+        </div>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Ask about makeup tips..." autocomplete="off">
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message', sender);
+        msgDiv.textContent = text;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return msgDiv;
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        userInput.value = '';
+        sendBtn.disabled = true;
+
+        const typingMsg = addMessage('MakeupMate AI is typing...', 'bot typing');
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            typingMsg.remove();
+            addMessage(data.reply || 'Sorry, something went wrong.', 'bot');
+        } catch (error) {
+            typingMsg.remove();
+            addMessage('Network error. Please try again.', 'bot');
+        } finally {
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
